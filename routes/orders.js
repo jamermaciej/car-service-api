@@ -58,4 +58,15 @@ router.put('/:orderId', async (req, res) => {
   }
 });
 
+router.delete('/:orderId', async (req, res) => {
+  try {
+    const removedOrder = await Order.findOneAndDelete({
+      id: req.params.orderId,
+    });
+    res.json(removedOrder);
+  } catch (err) {
+    res.json({ message: err });
+  }
+});
+
 module.exports = router;
