@@ -76,16 +76,16 @@ router.put('/:customerId', async (req, res) => {
   }
 });
 
-router.patch('/:customerId', async (req, res) => {
-  try {
-    const updatedCustomer = await Customer.updateOne(
-      { id: req.params.customerId },
-      { $set: { name: req.body.name } }
-    );
-    res.json(updatedCustomer);
-  } catch {
-    res.json({ message: err });
-  }
-});
+// router.patch('/:customerId', async (req, res) => {
+//   try {
+//     const updatedCustomer = await Customer.updateOne(
+//       { id: req.params.customerId },
+//       { $set: { name: req.body.name } }
+//     );
+//     res.json(updatedCustomer);
+//   } catch {
+//     res.json({ message: err });
+//   }
+// });
 
 module.exports = router;
