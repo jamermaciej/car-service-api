@@ -15,12 +15,14 @@ const carsRoute = require('./routes/cars');
 const statusesRoute = require('./routes/statuses');
 const messagesRoute = require('./routes/messages');
 const ordersRoute = require('./routes/orders');
+const emailsRoute = require('./routes/emails');
 
 app.use('/customers', customersRoute);
 app.use('/cars', carsRoute);
 app.use('/statuses', statusesRoute);
 app.use('/messages', messagesRoute);
 app.use('/orders', ordersRoute);
+app.use('/emails', emailsRoute);
 
 //ROUTES//
 app.get('/', (req,res) => {

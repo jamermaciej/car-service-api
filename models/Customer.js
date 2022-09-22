@@ -11,6 +11,7 @@ const CustomerSchema =  mongoose.Schema({
         postcode: String,
         province: String
     },
+    addressHtml: String,
     idNumber: { type: String, required: true, unique: true },
     email: String
 })

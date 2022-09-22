@@ -24,6 +24,7 @@ router.post('/', async (req, res) => {
       postcode: req.body.address.postcode,
       province: req.body.address.province,
     },
+    addressHtml: `${req.body.address.city}<br>${req.body.address.street}<br>${req.body.address.postcode}<br>${req.body.address.province}`,
     idNumber: idNumber,
     email: req.body.email,
   });
