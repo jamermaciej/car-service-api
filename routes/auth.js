@@ -207,13 +207,14 @@ router.post('/login', async (req, res) => {
 const multer  = require('multer');
 
 // Multer File upload settings
-const DIR = './uploads/';
+const DIR = './uploads/photos/';
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, DIR);
   },
   filename: (req, file, cb) => {
     const fileName = file.originalname.toLowerCase().split(' ').join('-');
+    // const fileName = req.body._id + '.' + file.originalname.split('.').pop();
     cb(null, fileName)
   }
 });
@@ -240,7 +241,8 @@ router.put('/users/:userId', upload.single('photo'), async (req, res) => {
         let photo = null;
 
         if (req.file) {
-            photo = url + '/uploads/' + req.file.filename;
+            photo = url + '/uploads/photos/' + req.file.filename;
+            // photo = url + '/uploads/photos/' + req.body._id + '.' + req.file.filename.split('.').pop();
         }
 
         const newUser = {
