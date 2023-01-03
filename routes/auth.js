@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 require("dotenv").config();
+const verifyToken = require("../middleware/auth");
 
 router.post('/register', async (req, res) => {
     try {
@@ -201,6 +202,24 @@ router.post('/login', async (req, res) => {
     } catch (err) {
         console.log(err);
         res.json(err);
+    }
+});
+
+router.get('/users/me', verifyToken, async (req, res) => {
+    try {
+        res.status(200).json({
+            _id: req.user._id,
+            name: req.user.name,
+            email: req.user.email,
+            token: req.user.token,
+            emailVerified: req.user.emailVerified,
+            created_at: req.user.created_at,
+            last_login_at: req.user.last_login_at,
+            phoneNumber: req.user.phoneNumber,
+            photo: req.user.photo
+        });
+    } catch (err) {
+      res.json({ message: err });
     }
 });
 
