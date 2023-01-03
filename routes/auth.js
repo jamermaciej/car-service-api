@@ -237,18 +237,24 @@ const upload = multer({
 router.put('/users/:userId', upload.single('photo'), async (req, res) => {
     try {
         const url = req.protocol + '://' + req.get('host');
+        let photo = null;
+
+        if (req.file) {
+            photo = url + '/uploads/' + req.file.filename;
+        }
 
         const newUser = {
             ...req.body,
-            photo: url + '/uploads/' + req.file.filename
+            photo: photo
         }
 
         const updatedUser = await User.findOneAndUpdate(
             { _id: req.params.userId },
             newUser,
-            { new: true, overwrite: true }
+            { new: true }
           );
-          res.status(200).json({
+
+        res.status(200).json({
             _id: updatedUser._id,
             name: updatedUser.name,
             email: updatedUser.email,
@@ -257,7 +263,7 @@ router.put('/users/:userId', upload.single('photo'), async (req, res) => {
             created_at: updatedUser.created_at,
             last_login_at: updatedUser.last_login_at,
             phoneNumber: updatedUser.phoneNumber,
-            photo: url + '/uploads/' + req.file.filename
+            photo: updatedUser.photo
         });
     } catch (err) {
         console.log(err);
