@@ -135,6 +135,8 @@ router.get('/verify/:userId/:uniqueString', async (req, res) => {
                     phoneNumber: updatedUser.phoneNumber,
                     photo: updatedUser.photo
                 });
+            } else {
+                res.status(400).send("Link has expired. Check the propriety of the link or contact with administrator.");
             }
         }
     }
