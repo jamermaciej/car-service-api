@@ -264,6 +264,8 @@ router.put('/users/:userId', upload.single('photo'), async (req, res) => {
         if (req.file) {
             photo = url + '/uploads/photos/' + req.file.filename;
             // photo = url + '/uploads/photos/' + req.body._id + '.' + req.file.filename.split('.').pop();
+        } else {
+            photo = req.body.photo;
         }
 
         const newUser = {
