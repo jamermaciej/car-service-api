@@ -132,7 +132,7 @@ router.get('/verify/:userId/:uniqueString', async (req, res) => {
                     emailVerified: updatedUser.emailVerified,
                     created_at: updatedUser.created_at,
                     last_login_at: updatedUser.last_login_at,
-                    roles: user.roles,
+                    roles: updatedUser.roles,
                     phoneNumber: updatedUser.phoneNumber,
                     photo: updatedUser.photo
                 });
@@ -221,7 +221,7 @@ router.get('/users/me', verifyToken, async (req, res) => {
             emailVerified: req.user.emailVerified,
             created_at: req.user.created_at,
             last_login_at: req.user.last_login_at,
-            roles: user.roles,
+            roles: req.user.roles,
             phoneNumber: req.user.phoneNumber,
             photo: req.user.photo
         });
@@ -292,7 +292,7 @@ router.put('/users/:userId', upload.single('photo'), async (req, res) => {
             emailVerified: updatedUser.emailVerified,
             created_at: updatedUser.created_at,
             last_login_at: updatedUser.last_login_at,
-            roles: user.roles,
+            roles: updatedUser.roles,
             phoneNumber: updatedUser.phoneNumber,
             photo: updatedUser.photo
         });
