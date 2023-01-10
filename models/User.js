@@ -2,10 +2,17 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require("bcryptjs");
 
+module.exports = Roles = {
+    ADMIN: 'Admin',
+    MANAGER: 'Manager',
+    EMPLOYEE: 'Employee',
+    CUSTOMER: 'Customer'
+}
+
 const UserSchema =  mongoose.Schema({
     name: {
         type: String,
-        required: ["Please tell us your name!"],
+        // required: ["Please tell us your name!"],
         default: null
     },
     email: {
@@ -29,6 +36,11 @@ const UserSchema =  mongoose.Schema({
             },
             message: "Passwords are not the same"
         }
+    },
+    roles: {
+        type: [String],
+        enum: Object.values(Roles),
+        default: Roles.EMPLOYEE
     },
     phoneNumber: {
         type: String

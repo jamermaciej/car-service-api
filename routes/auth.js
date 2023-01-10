@@ -21,7 +21,7 @@ router.post('/register', async (req, res) => {
         }
 
         const user = await User.create({
-            name,
+            name: name ? name : null,
             email: email.toLowerCase(), // sanitize: convert email to lowercase
             password,
             passwordConfirm,
@@ -30,10 +30,10 @@ router.post('/register', async (req, res) => {
 
         sendVerificationEmail(user, res);
 
-        res.status(201).json({ _id: user._id, name: user.name, email: user.email });
+        res.status(201).json({ _id: user._id, name: name ? user.name : null, email: user.email });
     } catch (err) {
         console.log(err);
-        res.json(err);
+        res.status(400).json(err.errors.name.message);
     }
 });
 
@@ -132,6 +132,7 @@ router.get('/verify/:userId/:uniqueString', async (req, res) => {
                     emailVerified: updatedUser.emailVerified,
                     created_at: updatedUser.created_at,
                     last_login_at: updatedUser.last_login_at,
+                    roles: user.roles,
                     phoneNumber: updatedUser.phoneNumber,
                     photo: updatedUser.photo
                 });
@@ -142,7 +143,7 @@ router.get('/verify/:userId/:uniqueString', async (req, res) => {
     }
 });
 
-router.post('/send-verify-email', async (req, res) => {
+router.post('/send-verify-email', verifyToken, async (req, res) => {
     try {
         const { email } = req.body;
 
@@ -153,6 +154,8 @@ router.post('/send-verify-email', async (req, res) => {
         }
         
         sendVerificationEmail({ _id: user._id, email: user.email }, res);
+
+        res.status(200).json({ message: 'Email send.' });
     } catch (err) {
         console.log(err);
         res.json(err);
@@ -194,6 +197,7 @@ router.post('/login', async (req, res) => {
                 emailVerified: user.emailVerified,
                 created_at: user.created_at,
                 last_login_at: user.last_login_at,
+                roles: user.roles,
                 phoneNumber: user.phoneNumber,
                 photo: user.photo
             });
@@ -217,6 +221,7 @@ router.get('/users/me', verifyToken, async (req, res) => {
             emailVerified: req.user.emailVerified,
             created_at: req.user.created_at,
             last_login_at: req.user.last_login_at,
+            roles: user.roles,
             phoneNumber: req.user.phoneNumber,
             photo: req.user.photo
         });
@@ -287,6 +292,7 @@ router.put('/users/:userId', upload.single('photo'), async (req, res) => {
             emailVerified: updatedUser.emailVerified,
             created_at: updatedUser.created_at,
             last_login_at: updatedUser.last_login_at,
+            roles: user.roles,
             phoneNumber: updatedUser.phoneNumber,
             photo: updatedUser.photo
         });

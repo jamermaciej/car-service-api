@@ -14,6 +14,7 @@ app.use(bodyParser.json());
 app.use('/uploads', express.static('uploads'))
 
 const verifyToken = require('./middleware/auth');
+const verifyRoles = require('./middleware/verifyRoles')
 
 //Import Routes
 
@@ -28,7 +29,7 @@ const emailsRoute = require('./routes/emails');
 app.use('/auth', authRoute);
 app.use('/customers', customersRoute);
 app.use('/cars', carsRoute);
-app.use('/statuses', statusesRoute);
+app.use('/statuses', verifyToken, verifyRoles(['Admin']), statusesRoute);
 app.use('/messages', messagesRoute);
 app.use('/orders', ordersRoute);
 app.use('/emails', emailsRoute);
