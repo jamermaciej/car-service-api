@@ -19,6 +19,7 @@ const verifyRoles = require('./middleware/verifyRoles')
 //Import Routes
 
 const authRoute = require('./routes/auth');
+const usersRoute = require('./routes/users');
 const customersRoute = require('./routes/customers');
 const carsRoute = require('./routes/cars');
 const statusesRoute = require('./routes/statuses');
@@ -27,6 +28,7 @@ const ordersRoute = require('./routes/orders');
 const emailsRoute = require('./routes/emails');
 
 app.use('/auth', authRoute);
+app.use('/users', verifyToken, verifyRoles(['Admin', 'Employee']), usersRoute);
 app.use('/customers', customersRoute);
 app.use('/cars', carsRoute);
 app.use('/statuses', verifyToken, verifyRoles(['Admin', 'Employee']), statusesRoute);

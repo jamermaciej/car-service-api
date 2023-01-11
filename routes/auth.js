@@ -82,7 +82,6 @@ const sendVerificationEmail = async ({ _id, email }, res) => {
             expiresAt: Date.now() + 21600000
         });
     } else {
-        console.log('new')
         const newVerification = await UserVerification.create({
             userId: _id,
             uniqueString: hashedUniqueString,
