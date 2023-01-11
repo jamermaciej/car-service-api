@@ -29,7 +29,7 @@ const emailsRoute = require('./routes/emails');
 app.use('/auth', authRoute);
 app.use('/customers', customersRoute);
 app.use('/cars', carsRoute);
-app.use('/statuses', verifyToken, verifyRoles(['Admin']), statusesRoute);
+app.use('/statuses', verifyToken, verifyRoles(['Admin', 'Employee']), statusesRoute);
 app.use('/messages', messagesRoute);
 app.use('/orders', ordersRoute);
 app.use('/emails', emailsRoute);
