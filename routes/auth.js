@@ -288,4 +288,32 @@ router.post('/change-password', verifyToken, async (req, res) => {
     }
 });
 
+router.delete('/delete-account', verifyToken, async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { password } = req.body;
+
+        if (!userId) {
+            res.status(400).send("User doesn't exist.");
+        }
+        
+        const user = await User.findOne({ _id: userId });
+       
+        if (password && user && await user.correctPassword(password, user.password)) {
+            const removedUser = await User.findOneAndDelete({
+                _id: userId,
+            });
+
+            res.status(200).json({
+                message: `Account ${removedUser.email} has been deleted successfully.`
+            });
+        } else {
+            res.status(400).send("Password incorrect, please provide correct password!");
+        }
+    } catch (err) {
+        console.log(err);
+        res.json(err);
+    }
+});
+
 module.exports = router;
