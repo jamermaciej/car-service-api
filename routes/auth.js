@@ -215,7 +215,7 @@ router.post('/change-email', verifyToken, async (req, res) => {
         const { password, email } = req.body;
 
         if (!(password && email)) {
-            res.status(400).send("Password and email is required");
+            res.status(400).send("Password and email are required");
         }
 
         const user = await User.findOne({ _id: userId });
@@ -239,6 +239,46 @@ router.post('/change-email', verifyToken, async (req, res) => {
                 phoneNumber: updatedUser.phoneNumber,
                 photo: updatedUser.photo
             });
+        } else {
+            res.status(400).send("Password incorrect, please provide correct password!");
+        }
+    } catch (err) {
+        console.log(err);
+        res.json(err);
+    }
+});
+
+router.post('/change-password', verifyToken, async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { password, newPassword } = req.body;
+
+        if (!(password && newPassword)) {
+            res.status(400).send("Password and new password are required");
+        }
+
+        const user = await User.findOne({ _id: userId });
+
+        if (user && await user.correctPassword(password, user.password)) {
+            if ( await user.correctPassword(newPassword, user.password) ) {
+                res.status(400).send("New password are the same as old, please provide different password!");
+            } else {
+            const newHashedPassword = await bcrypt.hash(newPassword, 12);;
+            const updatedUser = await User.findByIdAndUpdate(userId, { '$set' : { 'password' : newHashedPassword } }, { new : true });
+
+            res.status(200).json({
+                _id: updatedUser._id,
+                name: updatedUser.name,
+                token: req.user.token,
+                email: updatedUser.email,
+                emailVerified: updatedUser.emailVerified,
+                created_at: updatedUser.created_at,
+                last_login_at: updatedUser.last_login_at,
+                roles: updatedUser.roles,
+                phoneNumber: updatedUser.phoneNumber,
+                photo: updatedUser.photo
+            });
+            }
         } else {
             res.status(400).send("Password incorrect, please provide correct password!");
         }
