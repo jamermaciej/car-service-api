@@ -28,7 +28,7 @@ const ordersRoute = require('./routes/orders');
 const emailsRoute = require('./routes/emails');
 
 app.use('/auth', authRoute);
-app.use('/users', verifyToken, verifyRoles(['Admin', 'Employee']), usersRoute);
+app.use('/users', verifyToken, verifyRoles(['Admin', 'Employee', 'Manager']), usersRoute);
 app.use('/customers', customersRoute);
 app.use('/cars', carsRoute);
 app.use('/statuses', verifyToken, verifyRoles(['Admin', 'Employee']), statusesRoute);

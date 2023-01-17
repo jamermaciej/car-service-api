@@ -19,6 +19,7 @@ const verifyToken = async (req, res, next) => {
       return res.status(401).send("The user belonging to this token does no longer exist.");
     }
 
+    freshUser.token = token;
     req.user = freshUser;
   } catch (err) {
     return res.status(401).send("Invalid Token");

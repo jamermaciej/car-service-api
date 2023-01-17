@@ -127,7 +127,6 @@ router.get('/verify/:userId/:uniqueString', async (req, res) => {
                     _id: updatedUser._id,
                     name: updatedUser.name,
                     email: updatedUser.email,
-                    token: updatedUser.token,
                     emailVerified: updatedUser.emailVerified,
                     created_at: updatedUser.created_at,
                     last_login_at: updatedUser.last_login_at,
@@ -231,6 +230,7 @@ router.post('/change-email', verifyToken, async (req, res) => {
             res.status(200).json({
                 _id: updatedUser._id,
                 name: updatedUser.name,
+                token: req.user.token,
                 email: updatedUser.email,
                 emailVerified: updatedUser.emailVerified,
                 created_at: updatedUser.created_at,

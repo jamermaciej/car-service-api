@@ -83,13 +83,13 @@ router.put('/:userId', upload.single('photo'), async (req, res) => {
             { _id: req.params.userId },
             newUser,
             { new: true }
-          );
+        );
 
         res.status(200).json({
             _id: updatedUser._id,
             name: updatedUser.name,
             email: updatedUser.email,
-            token: updatedUser.token,
+            token: req.user.token,
             emailVerified: updatedUser.emailVerified,
             created_at: updatedUser.created_at,
             last_login_at: updatedUser.last_login_at,
@@ -113,7 +113,6 @@ router.delete('/:userId', async (req, res) => {
         _id: removedOUser._id,
         name: removedOUser.name,
         email: removedOUser.email,
-        token: removedOUser.token,
         emailVerified: removedOUser.emailVerified,
         created_at: removedOUser.created_at,
         last_login_at: removedOUser.last_login_at,
