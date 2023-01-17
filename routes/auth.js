@@ -210,4 +210,42 @@ router.post('/login', async (req, res) => {
     }
 });
 
+router.post('/change-email', verifyToken, async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { password, email } = req.body;
+
+        if (!(password && email)) {
+            res.status(400).send("Password and email is required");
+        }
+
+        const user = await User.findOne({ _id: userId });
+
+        if (email === user.email) {
+            res.status(400).send("This email is the same as you use now, give other email address.");
+        }
+
+        if (user && await user.correctPassword(password, user.password)) {
+            const updatedUser = await User.findByIdAndUpdate(userId, { '$set' : { 'email' : email } }, { new : true });
+
+            res.status(200).json({
+                _id: updatedUser._id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                emailVerified: updatedUser.emailVerified,
+                created_at: updatedUser.created_at,
+                last_login_at: updatedUser.last_login_at,
+                roles: updatedUser.roles,
+                phoneNumber: updatedUser.phoneNumber,
+                photo: updatedUser.photo
+            });
+        } else {
+            res.status(400).send("Password incorrect, please provide correct password!");
+        }
+    } catch (err) {
+        console.log(err);
+        res.json(err);
+    }
+});
+
 module.exports = router;
