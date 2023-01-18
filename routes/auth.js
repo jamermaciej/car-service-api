@@ -5,6 +5,7 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 require("dotenv").config();
 const verifyToken = require("../middleware/auth");
+const sendEmail = require("../utils/email");
 
 router.post('/register', async (req, res) => {
     try {
@@ -56,8 +57,6 @@ const transporter = nodemailer.createTransport({
 const sendVerificationEmail = async ({ _id, email }, res) => {
     const currentUrl = "http://localhost:4200/en/login/";
     const uniqueString = uuidv4() + _id;
-
-    console.log(_id)
 
     const mailOptions = {
         from: user,
@@ -264,7 +263,7 @@ router.post('/change-password', verifyToken, async (req, res) => {
                 res.status(400).send("New password are the same as old, please provide different password!");
             } else {
             const newHashedPassword = await bcrypt.hash(newPassword, 12);;
-            const updatedUser = await User.findByIdAndUpdate(userId, { '$set' : { 'password' : newHashedPassword } }, { new : true });
+            const updatedUser = await User.findByIdAndUpdate(userId, { '$set' : { 'password' : newHashedPassword, 'passwordChangedAt': Date.now() } }, { new : true });
 
             res.status(200).json({
                 _id: updatedUser._id,
@@ -310,6 +309,89 @@ router.delete('/delete-account', verifyToken, async (req, res) => {
         } else {
             res.status(400).send("Password incorrect, please provide correct password!");
         }
+    } catch (err) {
+        console.log(err);
+        res.json(err);
+    }
+});
+
+router.post('/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            res.status(400).send("Email address is required.");
+        }
+
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            res.status(400).send("There is no user with email address.");
+        }
+
+        const resetToken = await user.createPasswordResetToken(user._id);
+        await user.save({  validateBeforeSave: false });
+
+        // const resetURL = `${req.protocol}://${req.get('host')}/en/auth/resetPassword/${resetToken}`;
+        const resetURL = `http://localhost:4200/en/reset-password/${resetToken}`;
+        const message = `
+        Forgot your password? Submit a PATCH request with your new password and passwordConfrim to: ${resetURL}.<br />
+         If you didn't forgot your password, please ignore this email!
+        `;
+
+        try {
+            await sendEmail({
+                email: user.email,
+                subject: `Your password reset token (valid for 10 min)`,
+                message,
+            });
+    
+            res.status(200).json({
+                status: 'success',
+                message: 'Email has been sent!'
+            });
+        } catch(err) {
+            user.passwordResetToken = undefined;
+            user.passwordResetExpires = undefined;
+            await user.save({  validateBeforeSave: false });
+            
+            res.status(500).send("There was an error sending the email. Try again later!");
+        }
+    } catch (err) {
+        console.log(err);
+        res.json(err);
+    }
+});
+
+router.post('/reset-password/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { password, passwordConfirm } = req.body;
+
+        const user = await User.findOne({
+            passwordResetToken: token,
+            passwordResetExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            // co gdy token wygasnie - usuwamy z bazy?
+            res.status(400).send("Token is invalid or has expired.");
+        }
+
+        if ( await user.correctPassword(password, user.password) ) {
+            res.status(400).send("New password are the same as old, please provide different password!");
+        }
+
+        user.password = password;
+        user.passwordConfirm = passwordConfirm;
+        user.passwordResetToken = undefined;
+        user.passwordResetExpires = undefined;
+        await user.save();
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Password has been changed!'
+        });
     } catch (err) {
         console.log(err);
         res.json(err);

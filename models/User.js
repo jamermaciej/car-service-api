@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require("bcryptjs");
+const { v4: uuidv4 } = require('uuid');
 
 module.exports = Roles = {
     ADMIN: 'Admin',
@@ -61,6 +62,22 @@ const UserSchema =  mongoose.Schema({
         type: Date,
         default: Date.now()
     },
+    passwordResetToken: {
+        type: String
+    },
+    passwordResetExpires: {
+        type: Date
+    },
+    passwordChangedAt: {
+        type: Date
+    }
+});
+
+UserSchema.pre('save', async function(next){
+    if (!this.isModified('password') || this.isNew) return next();
+    
+    this.passwordChangedAt = Date.now();
+    next();
 });
 
 UserSchema.pre('save', async function(next){
@@ -73,6 +90,26 @@ UserSchema.pre('save', async function(next){
 
 UserSchema.methods.correctPassword = async function(condidatePassword, userPassword) {
     return await bcrypt.compare(condidatePassword, userPassword);
+}
+
+UserSchema.methods.createPasswordResetToken = async function(userId) {
+    const uniqueString = uuidv4() + userId;
+    const resetToken = await bcrypt.hash(uniqueString, 10);
+
+    this.passwordResetToken = resetToken;
+    this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+
+    return resetToken;
+}
+
+UserSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
+    if (this.passwordChangedAt) {
+        const changedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
+
+        return JWTTimestamp < changedTimestamp;
+    }
+
+    return false;
 }
 
 module.exports = mongoose.model('User', UserSchema);

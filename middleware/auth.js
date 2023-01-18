@@ -11,6 +11,8 @@ const verifyToken = async (req, res, next) => {
     return res.status(403).send("A token is required for authentication");
   }
 
+  // TODO - co gdy token został zmodyfikowany? albo wygasł? - obsługa błędu
+
   try {
     const decoded = await jwt.verify(token, config.TOKEN_KEY);
     const freshUser = await User.findById(decoded.id);
@@ -18,6 +20,11 @@ const verifyToken = async (req, res, next) => {
     if (!freshUser) {
       return res.status(401).send("The user belonging to this token does no longer exist.");
     }
+
+    // check if user changed password after the token was issued
+    // if (freshUser.changedPasswordAfter(decoded.iat)) {
+    //   return res.status(401).send("User recently changed password! Please log in again.");
+    // }
 
     freshUser.token = token;
     req.user = freshUser;
