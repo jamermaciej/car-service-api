@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const config = process.env;
+const { TokenExpiredError } = jwt;
 
 const verifyToken = async (req, res, next) => {
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -14,7 +15,7 @@ const verifyToken = async (req, res, next) => {
   // TODO - co gdy token został zmodyfikowany? albo wygasł? - obsługa błędu
 
   try {
-    const decoded = await jwt.verify(token, config.TOKEN_KEY);
+    const decoded = await jwt.verify(token, config.ACCESS_TOKEN_KEY);
     const freshUser = await User.findById(decoded.id);
 
     if (!freshUser) {
@@ -26,10 +27,14 @@ const verifyToken = async (req, res, next) => {
     //   return res.status(401).send("User recently changed password! Please log in again.");
     // }
 
-    freshUser.token = token;
+    freshUser.accessToken = token;
     req.user = freshUser;
   } catch (err) {
-    return res.status(401).send("Invalid Token");
+    if (err instanceof TokenExpiredError) {
+      return res.status(401).send({ message: "Unauthorized! Access Token was expired!" });
+    } 
+    
+    return res.status(401).json("Invalid Token");
   }
   return next();
   } else {
