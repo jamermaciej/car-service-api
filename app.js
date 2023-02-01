@@ -1,15 +1,28 @@
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 const cors = require('cors');
 require('dotenv/config');
 
-const http = require('http');
-const initWebsocket = require('./websocket');
-const server = http.createServer(app);
+const fs = require('fs');
 
-app.use(cors());
+const options = {
+    key: fs.readFileSync('ssl/localhost.key'),
+    cert: fs.readFileSync('ssl/localhost.crt')
+}
+
+const https = require('https');
+const initWebsocket = require('./websocket');
+const server = https.createServer(options, app);
+
+app.use(cors({
+    credentials: true,
+    origin: 'https://localhost:4200'
+}));
+
 app.use(bodyParser.json());
+app.use(cookieParser());
 
 app.use('/uploads', express.static('uploads'))
 

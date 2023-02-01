@@ -3,7 +3,7 @@ const { Server } = require('socket.io');
 function initWebsocket(server) {
   const io = new Server(server, {
     cors: {
-      origin: "http://localhost:4200",
+      origin: "https://localhost:4200",
       methods: ["GET", "POST"],
     },
     path: '/notification'
