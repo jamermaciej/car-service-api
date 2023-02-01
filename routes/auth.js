@@ -9,6 +9,8 @@ const sendEmail = require("../utils/email");
 const RefreshToken = require("../models/RefreshToken");
 const { TokenExpiredError } = jwt;
 
+const logoutController = require("../controllers/logoutController");
+
 router.post('/register', async (req, res) => {
     try {
         const { name, email, password, passwordConfirm } = req.body;
@@ -302,6 +304,8 @@ router.get('/refresh-token', async (req, res) => {
         res.json(err);
     }
 });
+
+router.get('/logout', logoutController.handleLogout);
 
 router.post('/change-email', verifyToken, async (req, res) => {
     try {
