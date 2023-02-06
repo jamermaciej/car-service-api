@@ -72,7 +72,7 @@ const UserSchema =  mongoose.Schema({
         type: Date
     },
     refreshToken: {
-        type: String
+        type: [String]
     }
 });
 

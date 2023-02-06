@@ -123,7 +123,7 @@ router.get('/verify/:userId/:uniqueString', async (req, res) => {
             res.status(400).send("Link has expired. Please log in and send new link from your profile account or contact with administrator.");
         } else {
             if (await bcrypt.compare(uniqueString, hashedUniqueString)) {
-                const updatedUser = await User.findOneAndUpdate({ _id: userId }, { emailVerified: true }, { new: true });
+                
                 const removedUser = await UserVerification.deleteOne({ userId });
 
                 res.status(200).json({
@@ -165,6 +165,7 @@ router.post('/send-verify-email', verifyToken, async (req, res) => {
 
 router.post('/login', async (req, res) => {
     try {
+        const { refreshToken } = req.cookies;
         const { email, password } = req.body;
 
         if (!(email && password)) {
@@ -186,20 +187,38 @@ router.post('/login', async (req, res) => {
               }
             );
 
-            const refreshToken = jwt.sign(
+            const newRefreshToken = jwt.sign(
                 { id: user._id },
                 process.env.REFRESH_TOKEN_KEY,
                 {
                     expiresIn: "1d",
                 }
             );
+
+            let newResfreshTokenArray = 
+                !refreshToken
+                    ? user.refreshToken
+                    : user.refreshToken.filter(rt => rt !== refreshToken);
+
+            if (refreshToken) {
+                const foundToken = await User.findOne({ refreshToken });
+
+                if (!foundToken) {
+                    console.log('attempted refresh token reuse at login!');
+                    newResfreshTokenArray = [];
+                }
+                
+                res.clearCookie('refreshToken', { sameSite: 'None', httpOnly: true, secure: true, maxAge: 24 * 60 * 60 * 1000 });
+            }
       
             user.accessToken = accessToken;
-            user.refreshToken = refreshToken;
+            // user.refreshToken = refreshToken;
 
-            await User.findByIdAndUpdate(user._id, { '$set' : { 'last_login_at' : Date.now(), 'refreshToken': refreshToken } }, { new : true });
+            await User.findByIdAndUpdate(user._id, { '$set' : { 'last_login_at' : Date.now(), 'refreshToken': [...newResfreshTokenArray, newRefreshToken] } }, { new : true });
 
-            res.cookie('refreshToken', refreshToken, { sameSite: 'None', httpOnly: true, secure: true, maxAge: 24 * 60 * 60 * 1000 });
+            res.cookie('refreshToken', newRefreshToken, { sameSite: 'None', httpOnly: true, secure: true, maxAge: 24 * 60 * 60 * 1000 });
+
+            console.log(newRefreshToken)
       
             res.status(200).json({
                 _id: user._id,
@@ -273,28 +292,61 @@ router.get('/refresh-token', async (req, res) => {
             return res.status(401).json({ message: "Refresh Token is required!" });
         }
 
+        // usunięcie cookie spowoduje, że po wygaśnięciu tokenu nie wykona się logout na froncie bo nie bedzie autoryzacji
+        //res.clearCookie('refreshToken', { sameSite: 'None', httpOnly: true, secure: true, maxAge: 24 * 60 * 60 * 1000 });
+
         const user = await User.findOne({ refreshToken });
 
+        // Detected refresh token reuse!
         if (!user) {
+            try {
+                const decodedUser = await jwt.verify(refreshToken, process.env.REFRESH_TOKEN_KEY);
+                const hackedUser = await User.findOne({ _id: decodedUser.id }); 
+                const u = await User.findOneAndUpdate({ _id: hackedUser._id }, { refreshToken: [] }, { new: true });
+                console.log(u)
+            } catch (err) {
+                console.log(err)
+                if (err) res.status(403).json({ message: "Refresh token was expired. Please make a new signin request." });
+            }
             res.status(403).json({ message: "There is no user with this refresh token!" });
         }
 
+        const newResfreshTokenArray = user.refreshToken.filter(rt => rt !== refreshToken);       
+
         try {
-            await jwt.verify(user.refreshToken, process.env.REFRESH_TOKEN_KEY);
+            await jwt.verify(refreshToken, process.env.REFRESH_TOKEN_KEY);
         } catch (err) {
             if (err instanceof TokenExpiredError) {
-                await User.findByIdAndUpdate(user._id, { '$unset' : { refreshToken: 1 }})
+                // await User.findByIdAndUpdate(user._id, { '$unset' : { refreshToken: 1 }});
+                const u = await User.findOneAndUpdate({ _id: user._id }, { refreshToken: [...newResfreshTokenArray] }, { new: true });
+
                 res.status(403).json({ message: "Refresh token was expired. Please make a new signin request." });
             }
+            res.sendStatus(403);
         }
 
+        // Refresh token was still valid
         const newAccessToken = jwt.sign(
             { id: user._id },
             process.env.ACCESS_TOKEN_KEY,
             {
-                expiresIn: "1m",
+                expiresIn: "15m",
             }
         );
+
+        const newRefreshToken = jwt.sign(
+            { id: user._id },
+            process.env.REFRESH_TOKEN_KEY,
+            {
+                expiresIn: "1d",
+            }
+        );
+
+        const newRefreshTokens = [...newResfreshTokenArray, newRefreshToken];
+        await User.findOneAndUpdate({ _id: user._id }, { refreshToken: newRefreshTokens });
+        // const result = await User.save();
+
+        res.cookie('refreshToken', newRefreshToken, { sameSite: 'None', httpOnly: true, secure: true, maxAge: 24 * 60 * 60 * 1000 });
 
         res.status(200).json({
             accessToken: newAccessToken
